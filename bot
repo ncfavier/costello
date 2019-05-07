@@ -131,7 +131,7 @@ while read -ru "$irc_fd" line; do
                 shift
                 case ${ctcp_cmd,,} in
                     version)
-                        ctcp version "napoleon (https://git.monade.li/nai/napoleon)"
+                        ctcp version "napoleon (https://git.monade.li/n/napoleon)"
                         ;;
                 esac
             elif [[ $message == "$prefix"* ]]; then
@@ -149,7 +149,7 @@ while read -ru "$irc_fd" line; do
                         say "Available commands: help, about"
                         ;;
                     about)
-                        say "An IRC bot written in Bash 4 (https://git.monade.li/nai/napoleon)"
+                        say "An IRC bot written in Bash 4 (https://git.monade.li/n/napoleon)"
                         ;;
                     *)
                         say "Unknown command: $bot_cmd"
