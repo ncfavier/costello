@@ -35,11 +35,32 @@ on_exit() {
     raw quit "${quotes[RANDOM%${#quotes[@]}]}"
 }
 
+IFS=$' \t\n'
+verbose=0
+config=./config.sh
+
+while getopts :vc: o; do
+    case $o in
+        v)
+            (( verbose++ ))
+            ;;
+        c)
+            config=$OPTARG
+            [[ $config == */* ]] || config=./$config
+            ;;
+        *)
+            printf 'usage: %s [-v]...\n' "$0"
+            exit 1
+            ;;
+    esac
+done
+shift "$(( OPTIND - 1 ))"
+
 nick=napoleon
 user=$nick
 realname="Napoléon Bonaparte"
 
-. ./config.sh || exit 1
+. "$config" || exit 1
 : "${server:?}" "${prefix:?}" "${port:=6667}"
 
 quotes=(
@@ -60,17 +81,6 @@ quotes=(
     "The world suffers a lot. Not because the violence of bad people. But because of the silence of the good people."
 )
 
-IFS=$' \t\n'
-verbose=0
-
-while getopts :v o; do
-    case $o in
-        v) (( verbose++ ));;
-        *) printf 'usage: %s [-v]...\n' "$0"; exit 1;;
-    esac
-done
-shift "$(( OPTIND - 1 ))"
-
 for dependency in xargs; do
     if ! command -v "$dependency" > /dev/null; then
         printf 'Dependency %s not found\n' "$dependency" >&2
@@ -81,6 +91,8 @@ done
 exec {irc_fd}<> /dev/tcp/"$server"/"$port" || exit 1
 
 trap on_exit exit
+
+declare -A userdb=()
 
 raw nick "$nick"
 raw user "$user" 0 '*' "$realname"
@@ -146,10 +158,21 @@ while read -ru "$irc_fd" line; do
                 shift
                 case ${bot_cmd,,} in
                     help)
-                        say "Available commands: help, about"
+                        say "Available commands: help, about, db"
                         ;;
                     about)
                         say "An IRC bot written in Bash 4 (https://git.monade.li/n/napoleon)"
+                        ;;
+                    db)
+                        if [[ $1 == = ]]; then
+                            shift
+                            userdb[$sender_nick]=$*
+                            say "O.K., $sender_nick."
+                        elif (( $# <= 1 )); then
+                            say "[${1:-$sender_nick}] ${userdb[${1:-$sender_nick}]}"
+                        else
+                            say "What?"
+                        fi
                         ;;
                     *)
                         say "Unknown command: $bot_cmd"
