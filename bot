@@ -119,6 +119,7 @@ while read -ru "$irc_fd" line; do
     case ${cmd,,} in
         001)
             [[ $password ]] && raw privmsg NickServ "identify $password"
+            raw mode "$nick" -x
             for channel in "${channels[@]}"; do
                 raw join "$channel"
             done
