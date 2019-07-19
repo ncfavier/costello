@@ -150,7 +150,7 @@ while read -ru "$irc_fd" line; do
             elif [[ $message == "$prefix"* ]]; then
                 message=${message#"$prefix"}
                 xargs printf '%s\0' <<< "$message" 2> /dev/null | mapfile -d '' bot_args
-                if (( ${PIPESTATUS[0]} != 0 )); then
+                if (( PIPESTATUS[0] != 0 )); then
                     say "Invalid arguments."
                     continue
                 fi
