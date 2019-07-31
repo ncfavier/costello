@@ -41,17 +41,17 @@ config=./config.sh
 
 while getopts :vc: o; do
     case $o in
-        v)
-            (( verbose++ ))
-            ;;
-        c)
-            config=$OPTARG
-            [[ $config == */* ]] || config=./$config
-            ;;
-        *)
-            printf 'usage: %s [-v]...\n' "$0"
-            exit 1
-            ;;
+    v)
+        (( verbose++ ))
+        ;;
+    c)
+        config=$OPTARG
+        [[ $config == */* ]] || config=./$config
+        ;;
+    *)
+        printf 'usage: %s [-v]...\n' "$0"
+        exit 1
+        ;;
     esac
 done
 shift "$(( OPTIND - 1 ))"
@@ -117,71 +117,71 @@ while read -ru "$irc_fd" line; do
     cmd=$1
     shift
     case ${cmd,,} in
-        001)
-            [[ $password ]] && raw privmsg NickServ "identify $password"
-            raw mode "$nick" -x
-            for channel in "${channels[@]}"; do
-                raw join "$channel"
-            done
-            ;;
-        ping)
-            raw pong "$1"
-            ;;
-        privmsg)
-            target=$1
-            message=$2
-            private=
-            (( verbose >= 1 )) && printf '%sPRIVMSG%s %s <%s> %s\n' "$(tput setaf 2)" "$(tput sgr0)" "$target" "$sender_nick" "$message" >&2
-            if [[ $target == $nick ]]; then
-                target=$sender_nick
-                private=1
+    001)
+        [[ $password ]] && raw privmsg NickServ "identify $password"
+        raw mode "$nick" -x
+        for channel in "${channels[@]}"; do
+            raw join "$channel"
+        done
+        ;;
+    ping)
+        raw pong "$1"
+        ;;
+    privmsg)
+        target=$1
+        message=$2
+        private=
+        (( verbose >= 1 )) && printf '%sPRIVMSG%s %s <%s> %s\n' "$(tput setaf 2)" "$(tput sgr0)" "$target" "$sender_nick" "$message" >&2
+        if [[ $target == $nick ]]; then
+            target=$sender_nick
+            private=1
+        fi
+        if (( private )) && [[ $message == $'\1'*$'\1' ]]; then
+            message=${message#$'\1'} message=${message%$'\1'}
+            read -ra ctcp_args <<< "$message"
+            set -- "${ctcp_args[@]}"
+            ctcp_cmd=$1
+            shift
+            case ${ctcp_cmd,,} in
+            version)
+                ctcp version "napoleon (https://git.monade.li/n/napoleon)"
+                ;;
+            esac
+        elif [[ $message == "$prefix"* ]]; then
+            message=${message#"$prefix"}
+            xargs printf '%s\0' <<< "$message" 2> /dev/null | mapfile -d '' bot_args
+            if (( ${PIPESTATUS[0]} != 0 )); then
+                say "Invalid arguments."
+                continue
             fi
-            if (( private )) && [[ $message == $'\1'*$'\1' ]]; then
-                message=${message#$'\1'} message=${message%$'\1'}
-                read -ra ctcp_args <<< "$message"
-                set -- "${ctcp_args[@]}"
-                ctcp_cmd=$1
-                shift
-                case ${ctcp_cmd,,} in
-                    version)
-                        ctcp version "napoleon (https://git.monade.li/n/napoleon)"
-                        ;;
-                esac
-            elif [[ $message == "$prefix"* ]]; then
-                message=${message#"$prefix"}
-                xargs printf '%s\0' <<< "$message" 2> /dev/null | mapfile -d '' bot_args
-                if (( PIPESTATUS[0] != 0 )); then
-                    say "Invalid arguments."
-                    continue
+            set -- "${bot_args[@]}"
+            bot_cmd=$1
+            shift
+            case ${bot_cmd,,} in
+            help)
+                say "Available commands: help, about, db"
+                ;;
+            about)
+                say "An IRC bot written in Bash 4 (https://git.monade.li/n/napoleon)"
+                ;;
+            db)
+                if [[ $1 == = ]]; then
+                    shift
+                    userdb[$sender_nick]=$*
+                    say "O.K., $sender_nick."
+                elif (( $# <= 1 )); then
+                    say "[${1:-$sender_nick}] ${userdb[${1:-$sender_nick}]}"
+                else
+                    say "What?"
                 fi
-                set -- "${bot_args[@]}"
-                bot_cmd=$1
-                shift
-                case ${bot_cmd,,} in
-                    help)
-                        say "Available commands: help, about, db"
-                        ;;
-                    about)
-                        say "An IRC bot written in Bash 4 (https://git.monade.li/n/napoleon)"
-                        ;;
-                    db)
-                        if [[ $1 == = ]]; then
-                            shift
-                            userdb[$sender_nick]=$*
-                            say "O.K., $sender_nick."
-                        elif (( $# <= 1 )); then
-                            say "[${1:-$sender_nick}] ${userdb[${1:-$sender_nick}]}"
-                        else
-                            say "What?"
-                        fi
-                        ;;
-                    *)
-                        say "Unknown command: $bot_cmd"
-                        ;;
-                esac
-            elif [[ ${message,,} == ?(*[![:alnum:]])"${nick,,}"?([![:alnum:]]*) ]]; then
-                reply "${quotes[RANDOM%${#quotes[@]}]}"
-            fi
-            ;;
+                ;;
+            *)
+                say "Unknown command: $bot_cmd"
+                ;;
+            esac
+        elif [[ ${message,,} == ?(*[![:alnum:]])"${nick,,}"?([![:alnum:]]*) ]]; then
+            reply "${quotes[RANDOM%${#quotes[@]}]}"
+        fi
+        ;;
     esac
 done
