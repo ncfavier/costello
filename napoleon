@@ -59,6 +59,7 @@ shift "$(( OPTIND - 1 ))"
 nick=napoleon
 user=$nick
 realname="Napoléon Bonaparte"
+url='https://git.monade.li/napoleon'
 
 . "$config" || exit 1
 : "${server:?}" "${prefix:?}" "${port:=6667}"
@@ -144,7 +145,7 @@ while read -ru "$irc_fd" line; do
             shift
             case ${ctcp_cmd,,} in
             version)
-                ctcp version "napoleon (https://git.monade.li/n/napoleon)"
+                ctcp version "napoleon ($url)"
                 ;;
             esac
         elif [[ $message == "$prefix"* ]]; then
@@ -162,7 +163,7 @@ while read -ru "$irc_fd" line; do
                 say "Available commands: help, about, db"
                 ;;
             about)
-                say "An IRC bot written in Bash 4 (https://git.monade.li/n/napoleon)"
+                say "An IRC bot written in Bash 4 ($url)"
                 ;;
             db)
                 if [[ $1 == = ]]; then
