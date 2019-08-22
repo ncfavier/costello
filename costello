@@ -53,27 +53,19 @@ while getopts :vc: o; do
 done
 shift "$(( OPTIND - 1 ))"
 
-nick=costello
-user=$nick
-realname="Lou Costello"
 url='https://git.monade.li/costello'
+
+nick=costello
+user=
+realname=
 quit_message=""
 
 . "$config" || exit 1
-: "${server:?}" "${prefix:?}" "${port:=6667}"
-
-for dependency in xargs; do
-    if ! command -v "$dependency" > /dev/null; then
-        printf 'Dependency %s not found\n' "$dependency" >&2
-        exit 1
-    fi
-done
+: "${server:?}" "${prefix:?}" "${port:=6667}" "${user:=$nick}" "${realname:=$nick}"
 
 exec {irc_fd}<> /dev/tcp/"$server"/"$port" || exit 1
 
 trap on_exit exit
-
-declare -A userdb=()
 
 raw nick "$nick"
 raw user "$user" 0 '*' "$realname"
@@ -119,10 +111,7 @@ while read -ru "$irc_fd" line; do
         fi
         if (( private )) && [[ $message == $'\1'*$'\1' ]]; then
             message=${message#$'\1'} message=${message%$'\1'}
-            read -ra ctcp_args <<< "$message"
-            set -- "${ctcp_args[@]}"
-            ctcp_cmd=$1
-            shift
+            read -r ctcp_cmd _ <<< "$message"
             case ${ctcp_cmd,,} in
             version)
                 ctcp version "costello ($url)"
@@ -130,31 +119,10 @@ while read -ru "$irc_fd" line; do
             esac
         elif [[ $message == "$prefix"* ]]; then
             message=${message#"$prefix"}
-            xargs printf '%s\0' <<< "$message" 2> /dev/null | mapfile -d '' bot_args
-            if (( ${PIPESTATUS[0]} != 0 )); then
-                say "Invalid arguments."
-                continue
-            fi
-            set -- "${bot_args[@]}"
-            bot_cmd=$1
-            shift
+            read -r bot_cmd rest <<< "$message"
             case ${bot_cmd,,} in
             help)
-                say "Available commands: help, about, db"
-                ;;
-            about)
-                say "An IRC bot written in Bash 4 ($url)"
-                ;;
-            db)
-                if [[ $1 == = ]]; then
-                    shift
-                    userdb[$sender_nick]=$*
-                    say "O.K., $sender_nick."
-                elif (( $# <= 1 )); then
-                    say "[${1:-$sender_nick}] ${userdb[${1:-$sender_nick}]}"
-                else
-                    say "What?"
-                fi
+                say "Available commands: help. Source at <$url>."
                 ;;
             *)
                 say "Unknown command: $bot_cmd"
