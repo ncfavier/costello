@@ -1,7 +1,4 @@
 #!/bin/bash
-#
-# napoleon - an IRC bot written in Bash 4
-# depends on: xargs
 
 shopt -s lastpipe
 
@@ -56,10 +53,10 @@ while getopts :vc: o; do
 done
 shift "$(( OPTIND - 1 ))"
 
-nick=napoleon
+nick=costello
 user=$nick
 realname="Napoléon Bonaparte"
-url='https://git.monade.li/napoleon'
+url='https://git.monade.li/costello'
 
 . "$config" || exit 1
 : "${server:?}" "${prefix:?}" "${port:=6667}"
@@ -145,7 +142,7 @@ while read -ru "$irc_fd" line; do
             shift
             case ${ctcp_cmd,,} in
             version)
-                ctcp version "napoleon ($url)"
+                ctcp version "costello ($url)"
                 ;;
             esac
         elif [[ $message == "$prefix"* ]]; then
