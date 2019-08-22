@@ -55,7 +55,7 @@ shift "$(( OPTIND - 1 ))"
 
 nick=costello
 user=$nick
-realname="Napoléon Bonaparte"
+realname="Lou Costello"
 url='https://git.monade.li/costello'
 
 . "$config" || exit 1
