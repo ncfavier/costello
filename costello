@@ -32,7 +32,6 @@ on_exit() {
     raw quit "$quit_message"
 }
 
-IFS=$' \t\n'
 verbose=0
 config=./config.sh
 
@@ -48,7 +47,6 @@ while getopts :vc: o; do
     *)
         printf 'usage: %s [-v]...\n' "$0"
         exit 1
-        ;;
     esac
 done
 shift "$(( OPTIND - 1 ))"
@@ -115,7 +113,6 @@ while read -ru "$irc_fd" line; do
             case ${ctcp_cmd,,} in
             version)
                 ctcp version "costello ($url)"
-                ;;
             esac
         elif [[ $message == "$prefix"* ]]; then
             message=${message#"$prefix"}
@@ -126,9 +123,7 @@ while read -ru "$irc_fd" line; do
                 ;;
             *)
                 say "Unknown command: $bot_cmd"
-                ;;
             esac
         fi
-        ;;
     esac
 done
